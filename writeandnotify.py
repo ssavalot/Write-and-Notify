@@ -1,4 +1,4 @@
-""" 
+"""
     Write and Notify v1.0.0
     Copyright (C) 2018 Levente Vass
 
@@ -20,13 +20,13 @@
 from PySide2 import QtWidgets, QtGui
 
 import nuke
-
 import smtplib
 import writeandnotify_ui
 
 WINDOW_WIDTH = 300
 WINDOW_HEIGHT = 216
 
+# server constants
 YAHOO_MAIL = "yahoo.com"
 YAHOO_SMTP_SERVER = "smtp.mail.yahoo.com"
 YAHOO_SMTP_PORT = 587
@@ -35,76 +35,106 @@ GMAIL_MAIL = "gmail.com"
 GMAIL_SMTP_SERVER = "smtp.gmail.com"
 GMAIL_SMTP_PORT = 587
 
-version_label_text = "v1.0.0"
+SERVER_INFO = [["yahoo", "smtp.mail.yahoo.com", 587], ["gmail", "smtp.gmail.com", 587]]
+
+# placeholder text
+email_lineEdit_placeholderText = "e-mail"
+pasword_lineEdit_placeholderText = "password"
+to_lineEdit_placeholderText = "send a copy"
+subject_lineEdit_placeholderText = "subject"
+message_lineEdit_placeholderText = "message"
+
+# widget text
+include_auto_message_checkBox_text = "include Write name"
 
 cancel_pushButton_text = "Cancel"
 execute_pushButton_text = "Run"
+info_label_text = ""
 
-email_lineEdit_text = "email"
-pasword_lineEdit_text = "password"
-subject_lineEdit_text = "subject"
-message_lineEdit_text = "message"
+version_label_text = "v1.1.0"
 
-cancel_pushButton_toolTip_text = "Cancel"
-execute_pushButton_toolTip_text = "Run"
+# tooltips
+email_lineEdit_toolTip = "Type your e-mail address, e.g. myaddress@gmail.com or myaddress@yahoo.com."
+pasword_lineEdit_toolTip = "password"
+copy_to_lineEdit_toolTip = "Send a copy to recipients."
+subject_lineEdit_toolTip = "subject"
+include_auto_message_checkBox_toolTip = "The Write node name attached to the end of the message."
+message_lineEdit_toolTip = "message"
 
-email_lineEdit_toolTip_text = "Type your email address, e.g. myaddress@gmail.com or myaddress@yahoo.com."
-pasword_lineEdit_toolTip_text = "password"
-subject_lineEdit_toolTip_text = "subject"
-message_lineEdit_toolTip_text = "message"
-include_auto_message_checkBox_toolTip_text = "The Write node name attached to the end of the message."
+cancel_pushButton_toolTip = "Cancel"
+execute_pushButton_toolTip = "Run"
 
-include_auto_message_checkBox_text = "include write name"
-
+# warning messages
 no_selected_write_message = "Write is not selected!"
+info_label_warning_text = "Wrong e-mail or password!"
+render_done_but_not_sent_warning_text = "Render is done but the notification was not sent.\nMissing or wrong e-mail or password."
 
-## @ToDo
+# for searching
+start = "@"
+end = "."
+
+# @ToDo
 # - implement some warning and error messages
 # missing_email_or_password_message = "Notification is not sent, missing email or password!"
 # wrong_email_or_password_message = "Notification is not sent, wrong email or password!"
-## @Refactor
+# @Refactor
 # - make code more consistent
 # - render_selected function too big
 # - beautify mail server switcher code
 # - implement regexp validator
-## @Ideas
-# UI/UX
-# - implement completer and store email address in current session
-# - auto generated body content
+# @Ideas
+# - add a send a copy field
 
 
 class SendMail(object):
-    def __init__(self, email, password):
+    def __init__(self, email, password, copyto):
         self.email = email
         self.password = password
+        self.copyto = copyto
 
-        # mail server switcher
-        if self.email[-9:] == YAHOO_MAIL:
-            self.server = YAHOO_SMTP_SERVER
-            self.port = YAHOO_SMTP_PORT
-        elif self.email[-9:] == GMAIL_MAIL:
-            self.server = GMAIL_SMTP_SERVER
-            self.port = GMAIL_SMTP_PORT
+        self.server = self.select_server()[0]
+        self.port = self.select_server()[1]
 
         session = smtplib.SMTP(self.server, self.port)
         session.ehlo()
         session.starttls()
         session.ehlo
-        session.login(self.email, self.password)
-        self.session = session
+        try:
+            self.ret = True
+            session.login(self.email, self.password)
+            self.session = session
+        except:
+            self.ret = False
 
     def send_message(self, subject, body):
+
+        self.copyto = self.copyto.split(',')
+        self.recipients = [[self.email], self.copyto]
+        self.recipients = [j for i in self.recipients for j in i]
+
         headers = [
             "From: " + self.email,
             "Subject: " + subject,
-            "To: " + self.email,
+            "To: " + "," .join(self.recipients),
             "MIME-Version: 1.0",
-           "Content-Type: text/html"]
-        headers = "\r\n".join(headers)
+            "Content-Type: text/html"]
+
+        headers = "\r".join(headers)
+
         self.session.sendmail(
             self.email,
-            self.email,
+            self.recipients,
             headers + "\r\n\r\n" + body)
+
+        self.session.close()
+
+    def select_server(self):
+        for i in SERVER_INFO:
+            if self.email[self.email.find(start) + len(start):self.email.rfind(end)] == i[0]:
+                self.server = i[1]
+                self.port = i[2]
+
+        return [self.server, self.port]
 
 
 class WriteandNotify(QtWidgets.QMainWindow, writeandnotify_ui.Ui_writeandnotify_MainWindow):
@@ -112,8 +142,8 @@ class WriteandNotify(QtWidgets.QMainWindow, writeandnotify_ui.Ui_writeandnotify_
         super(self.__class__, self).__init__()
         self.setupUi(self)
         self.setMinimumSize(WINDOW_WIDTH, WINDOW_HEIGHT)
-        self.location_on_the_screen()
-        self.set_ui_text()
+        self.setup_window_location()
+        self.setup_ui_text()
 
         self.cancel_pushButton.clicked.connect(self.quit)
         self.execute_pushButton.clicked.connect(self.render_selected)
@@ -121,7 +151,7 @@ class WriteandNotify(QtWidgets.QMainWindow, writeandnotify_ui.Ui_writeandnotify_
     def quit(self):
         self.close()
 
-    def location_on_the_screen(self):
+    def setup_window_location(self):
         # setup window properties
         screen = QtWidgets.QDesktopWidget().screenGeometry()
         widget = self.geometry()
@@ -129,39 +159,38 @@ class WriteandNotify(QtWidgets.QMainWindow, writeandnotify_ui.Ui_writeandnotify_
         y = screen.height()/2-(WINDOW_HEIGHT/2)-screen.height()/12
         self.move(x, y)
 
-    def set_ui_text(self):
-        # setup text content
+    def setup_ui_text(self):
+        # setup widget texts
         self.cancel_pushButton.setText(cancel_pushButton_text)
         self.execute_pushButton.setText(execute_pushButton_text)
-
-        self.email_lineEdit.setPlaceholderText(email_lineEdit_text)
-        self.password_lineEdit.setPlaceholderText(pasword_lineEdit_text)
-        self.subject_lineEdit.setPlaceholderText(subject_lineEdit_text)
-        self.message_textEdit.setPlaceholderText(message_lineEdit_text)
-
         self.include_auto_message_checkBox.setText(include_auto_message_checkBox_text)
+        self.info_label.setText(info_label_text)
 
-        # setup tooltip text content
-        self.cancel_pushButton.setToolTip(cancel_pushButton_toolTip_text)
-        self.execute_pushButton.setToolTip(execute_pushButton_toolTip_text)
+        # setup placeholder texts
+        self.email_lineEdit.setPlaceholderText(email_lineEdit_placeholderText)
+        self.password_lineEdit.setPlaceholderText(pasword_lineEdit_placeholderText)
+        self.copy_to_lineEdit.setPlaceholderText(to_lineEdit_placeholderText)
+        self.subject_lineEdit.setPlaceholderText(subject_lineEdit_placeholderText)
+        self.message_textEdit.setPlaceholderText(message_lineEdit_placeholderText)
 
-        self.email_lineEdit.setToolTip(email_lineEdit_toolTip_text)
-        self.password_lineEdit.setToolTip(pasword_lineEdit_toolTip_text)
-        self.subject_lineEdit.setToolTip(subject_lineEdit_toolTip_text)
-        self.message_textEdit.setToolTip(message_lineEdit_toolTip_text)
+        # setup tooltips
+        self.cancel_pushButton.setToolTip(cancel_pushButton_toolTip)
+        self.execute_pushButton.setToolTip(execute_pushButton_toolTip)
 
-        self.include_auto_message_checkBox.setToolTip(include_auto_message_checkBox_toolTip_text)
+        self.email_lineEdit.setToolTip(email_lineEdit_toolTip)
+        self.password_lineEdit.setToolTip(pasword_lineEdit_toolTip)
+        self.copy_to_lineEdit.setToolTip(copy_to_lineEdit_toolTip)
+        self.subject_lineEdit.setToolTip(subject_lineEdit_toolTip)
+        self.message_textEdit.setToolTip(message_lineEdit_toolTip)
+
+        self.include_auto_message_checkBox.setToolTip(include_auto_message_checkBox_toolTip)
 
         self.version_label.setText(version_label_text)
 
-    def render_selected(self):
-        self.nodes = nuke.selectedNodes('Write')
+    def execute_render(self):
 
         if self.execute_pushButton.clicked:
             self.quit()
-
-        if self.nodes == []:
-            nuke.message(no_selected_write_message)
 
         # sort by render order
         self.nodes.sort(key=lambda x: x['render_order'].value())
@@ -174,44 +203,74 @@ class WriteandNotify(QtWidgets.QMainWindow, writeandnotify_ui.Ui_writeandnotify_
         t = ()  # only used in executeMultiple()
 
         # render!
-        c = len(self.nodes)
-        message_list = []
+        # c = len(self.nodes)
+        self.write_list = []
         for i, node in enumerate(self.nodes):
-            f = int(node['first'].value())
-            l = int(node['last'].value())
+            self.first_frame = int(node['first'].value())
+            self.last_frame = int(node['last'].value())
 
             # execute node
-            nuke.execute(node, f, l, 1)
-
-            t = t + ((f, l, 1),)  # only used in executeMultiple()
-            # write_is_done = "%d of %d, %s is done" % (i + 1, c, node.name())
+            nuke.execute(node, self.first_frame, self.last_frame, 1)
+            t = t + ((self.first_frame, self.last_frame, 1),)  # only used in executeMultiple()
             write_is_done = "%s is done" % (node.name())
-            message_list.append(write_is_done)
+            self.write_list.append(write_is_done)
 
         # set proxy back to original value
         nuke.root()['proxy'].setValue(proxy)
 
-        # cleanup message
-        self.auto_message = str(message_list)
-        self.auto_message_clean = self.auto_message.replace("'", "")
-
-        # send mail
+    def render_selected(self):
         self.your_email = str(self.email_lineEdit.text())
         self.your_password = str(self.password_lineEdit.text())
+        self.copy_to = str(self.copy_to_lineEdit.text())
         self.your_subject = self.subject_lineEdit.text()
+
+        self.selected_server = self.your_email[self.your_email.find(start) + len(start):self.your_email.rfind(end)]
+
+        self.nodes = nuke.selectedNodes('Write')
+
+        if self.nodes == []:
+            nuke.message(no_selected_write_message)
+        elif self.selected_server not in [j for i in SERVER_INFO for j in i]:
+            self.info_label.setText(info_label_text)
+            self.execute_render()
+            nuke.message(render_done_but_not_sent_warning_text)
+        elif self.user_account_check(self.your_email, self.your_password, self.copy_to) == False:
+            self.info_label.setText(info_label_warning_text)
+        else:
+            self.info_label.setText(info_label_text)
+            self.execute_render()
+            # send mail
+            self.prepare_and_send_message(self.your_email, self.your_password, self.copy_to)
+
+    def cleanup_write_list_message(self, write_list):
+        self.write_list = str(write_list)
+        self.write_list = self.write_list.replace("'", "")[1:-1]
+        return self.write_list
+
+    def prepare_and_send_message(self, your_email, your_password, copy_to):
         if self.include_auto_message_checkBox.isChecked():
-            self.your_message_body = self.message_textEdit.toPlainText() + "<br><br>" + self.auto_message_clean[1:-1]
+            self.your_message_body = self.message_textEdit.toPlainText() + "<br><br>" + self.cleanup_write_list_message(self.write_list)
         else:
             self.your_message_body = self.message_textEdit.toPlainText()
 
-        if len(self.your_email) and len(self.your_password) == 0:
-            nuke.message("Render is done but the notification was not sent. Missing email or password.")
+        if not self.your_email or not self.your_password:
+            pass
         else:
-            mm = SendMail(self.your_email, self.your_password)
-            mm.send_message(self.your_subject, self.your_message_body)
+            self.message = SendMail(self.your_email, self.your_password, self.copy_to)
+            self.message.send_message(self.your_subject, self.your_message_body)
 
         del self.your_password
 
+    def user_account_check(self, your_email, your_password, copy_to):
+        self.message = SendMail(self.your_email, self.your_password, self.copy_to)
+
+        return self.message.ret
+
+
+# if __name__ == "__main__":
+#     aa = WriteandNotify()
+#     aa.show()
+
 
 def main(a):
-    pass
+   pass

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>293</width>
-    <height>266</height>
+    <height>317</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -44,6 +44,29 @@
        </widget>
       </item>
      </layout>
+    </item>
+    <item>
+     <widget class="Line" name="line">
+      <property name="styleSheet">
+       <string notr="true">color: rgb(99, 99, 99);</string>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QLineEdit" name="copy_to_lineEdit">
+      <property name="toolTip">
+       <string>copy_to_toolTip</string>
+      </property>
+      <property name="autoFillBackground">
+       <bool>false</bool>
+      </property>
+      <property name="placeholderText">
+       <string>copy_to_placeholderText</string>
+      </property>
+     </widget>
     </item>
     <item>
      <widget class="QLineEdit" name="subject_lineEdit">
@@ -100,16 +123,36 @@
      </layout>
     </item>
     <item>
-     <widget class="QLabel" name="version_label">
-      <property name="font">
-       <font>
-        <pointsize>8</pointsize>
-       </font>
-      </property>
-      <property name="text">
-       <string>version_label_text</string>
-      </property>
-     </widget>
+     <layout class="QHBoxLayout" name="info_horizontalLayout">
+      <item>
+       <widget class="QLabel" name="version_label">
+        <property name="font">
+         <font>
+          <pointsize>8</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>version_label_text</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="info_label">
+        <property name="font">
+         <font>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">color: rgb(255, 56, 59);</string>
+        </property>
+        <property name="text">
+         <string>info_label_text</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </item>
    </layout>
   </widget>

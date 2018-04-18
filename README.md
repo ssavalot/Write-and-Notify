@@ -4,7 +4,13 @@ Levente Vass
 April 2018
 levente.shadow@gmail.com
 
-INSTALL:
+CHANGELOG
+
+v1.1.0
+- Send a copy field have been added. You can send a copy of the message to multiple recipients.
+- Code cleanup and better error handling.
+
+INSTALL
 
     1.)
     Copy these files to the .nuke directory.
@@ -20,21 +26,21 @@ INSTALL:
     writeandnotify_form = writeandnotify.WriteandNotify()
     menu.addCommand("Other/Write and Notify", "writeandnotify.main(writeandnotify_form.show())", "")
 
-USAGE:
+USAGE
 
     1. Setup frame range on renderable write node(s).
-    2. Type your e-mail and password, subject and message are optional.
+    2. Type your e-mail and password if you want to receive a notification, everything else are optional.
     3. Select one or multiple wite nodes.
-    4. Press Run button.
+    4. Press Run button. If you leave the fields blank, you can execute selected Write nodes.
 
     The tool currently only works with g-mail and yahoo accounts.
     You can execute multiple write nodes, the rendering is sorted by render order.
 
-SECURITY:
+SECURITY
 
     The entered password is not encrypted, please use temp account for messaging.
 
-COMPATIBILTY:
+COMPATIBILTY
 
     NUKE 11 and above
 
