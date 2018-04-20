@@ -1,8 +1,12 @@
-Write and Notify
-v1.2
-Levente Vass
-April 2018
-levente.shadow@gmail.com
+<b>Write and Notify</b><br>
+v1.2<br>
+Levente Vass<br>
+April 2018<br>
+levente.shadow@gmail.com<br>
+
+DESCRIPTION
+
+When the render is done, the tool sends you a message to your email address. The tool currently works with g-mail and yahoo accounts.
 
 CHANGELOG
 
