@@ -1,6 +1,9 @@
 Write and Notify
+
 v1.2
+
 Levente Vass
+
 April 2018
 
 DESCRIPTION
