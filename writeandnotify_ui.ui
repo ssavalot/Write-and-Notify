@@ -56,27 +56,31 @@
      </widget>
     </item>
     <item>
-     <widget class="QLineEdit" name="copy_to_lineEdit">
-      <property name="toolTip">
-       <string>copy_to_toolTip</string>
-      </property>
-      <property name="autoFillBackground">
-       <bool>false</bool>
-      </property>
-      <property name="placeholderText">
-       <string>copy_to_placeholderText</string>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QLineEdit" name="subject_lineEdit">
-      <property name="toolTip">
-       <string>subject_toolTip</string>
-      </property>
-      <property name="placeholderText">
-       <string>subject_placeholderText</string>
-      </property>
-     </widget>
+     <layout class="QGridLayout" name="copy_and_subject_gridLayout">
+      <item row="1" column="0">
+       <widget class="QLineEdit" name="subject_lineEdit">
+        <property name="toolTip">
+         <string>subject_toolTip</string>
+        </property>
+        <property name="placeholderText">
+         <string>subject_placeholderText</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLineEdit" name="copy_to_lineEdit">
+        <property name="toolTip">
+         <string>copy_to_toolTip</string>
+        </property>
+        <property name="autoFillBackground">
+         <bool>false</bool>
+        </property>
+        <property name="placeholderText">
+         <string>copy_to_placeholderText</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </item>
     <item>
      <widget class="QCheckBox" name="include_auto_message_checkBox">

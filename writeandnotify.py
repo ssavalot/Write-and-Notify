@@ -16,8 +16,11 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+from PySide2 import QtWidgets, QtGui, QtCore
 
-from PySide2 import QtWidgets, QtGui
+import os
+import sys
+import csv
 
 import nuke
 import smtplib
@@ -27,14 +30,6 @@ WINDOW_WIDTH = 300
 WINDOW_HEIGHT = 216
 
 # server constants
-YAHOO_MAIL = "yahoo.com"
-YAHOO_SMTP_SERVER = "smtp.mail.yahoo.com"
-YAHOO_SMTP_PORT = 587
-
-GMAIL_MAIL = "gmail.com"
-GMAIL_SMTP_SERVER = "smtp.gmail.com"
-GMAIL_SMTP_PORT = 587
-
 SERVER_INFO = [["yahoo", "smtp.mail.yahoo.com", 587], ["gmail", "smtp.gmail.com", 587]]
 
 # placeholder text
@@ -51,7 +46,7 @@ cancel_pushButton_text = "Cancel"
 execute_pushButton_text = "Run"
 info_label_text = ""
 
-version_label_text = "v1.1.0"
+version_label_text = "v1.2"
 
 # tooltips
 email_lineEdit_toolTip = "Type your e-mail address, e.g. myaddress@gmail.com or myaddress@yahoo.com."
@@ -73,17 +68,10 @@ render_done_but_not_sent_warning_text = "Render is done but the notification was
 start = "@"
 end = "."
 
-# @ToDo
-# - implement some warning and error messages
-# missing_email_or_password_message = "Notification is not sent, missing email or password!"
-# wrong_email_or_password_message = "Notification is not sent, wrong email or password!"
-# @Refactor
+auto_complete = True
+
+# TODO
 # - make code more consistent
-# - render_selected function too big
-# - beautify mail server switcher code
-# - implement regexp validator
-# @Ideas
-# - add a send a copy field
 
 
 class SendMail(object):
@@ -99,6 +87,8 @@ class SendMail(object):
         session.ehlo()
         session.starttls()
         session.ehlo
+
+        # try login, used in user_account_check()
         try:
             self.ret = True
             session.login(self.email, self.password)
@@ -107,7 +97,6 @@ class SendMail(object):
             self.ret = False
 
     def send_message(self, subject, body):
-
         self.copyto = self.copyto.split(',')
         self.recipients = [[self.email], self.copyto]
         self.recipients = [j for i in self.recipients for j in i]
@@ -137,24 +126,223 @@ class SendMail(object):
         return [self.server, self.port]
 
 
+class AutoCompleteEdit(QtWidgets.QLineEdit):
+    def __init__(self, model, separator=' ', addSpaceAfterCompleting=True):
+        super(AutoCompleteEdit, self).__init__()
+        self._separator = separator
+        self._addSpaceAfterCompleting = addSpaceAfterCompleting
+        self._completer = QtWidgets.QCompleter(model)
+        self._completer.setWidget(self)
+        self.connect(
+                self._completer,
+                QtCore.SIGNAL('activated(QString)'),
+                self._insertCompletion)
+        self._keysToIgnore = [QtCore.Qt.Key_Enter,
+                              QtCore.Qt.Key_Return,
+                              QtCore.Qt.Key_Escape,
+                              QtCore.Qt.Key_Tab]
+
+    def _insertCompletion(self, completion):
+        """
+            This is the event handler for the QCompleter.activated(QString) signal,
+            it is called when the user selects an item in the completer popup.
+        """
+        extra = len(completion) - len(self._completer.completionPrefix())
+        extra_text = completion[-extra:]
+        if self._addSpaceAfterCompleting:
+            extra_text += ''
+        self.setText(self.text() + extra_text)
+
+    def textUnderCursor(self):
+        text = self.text()
+        textUnderCursor = ''
+        i = self.cursorPosition() - 1
+        while i >= 0 and text[i] != self._separator:
+            textUnderCursor = text[i] + textUnderCursor
+            i -= 1
+        return textUnderCursor
+
+    def keyPressEvent(self, event):
+        if self._completer.popup().isVisible():
+            if event.key() in self._keysToIgnore:
+                event.ignore()
+                return
+        super(AutoCompleteEdit, self).keyPressEvent(event)
+        completionPrefix = self.textUnderCursor()
+        if completionPrefix != self._completer.completionPrefix():
+            self._updateCompleterPopupItems(completionPrefix)
+        if len(event.text()) > 0 and len(completionPrefix) > 0:
+            self._completer.complete()
+        if len(completionPrefix) == 0:
+            self._completer.popup().hide()
+
+    def _updateCompleterPopupItems(self, completionPrefix):
+        """
+            Filters the completer's popup items to only show items
+            with the given prefix.
+        """
+        self._completer.setCompletionPrefix(completionPrefix)
+        self._completer.popup().setCurrentIndex(
+                self._completer.completionModel().index(0, 0))
+
+
 class WriteandNotify(QtWidgets.QMainWindow, writeandnotify_ui.Ui_writeandnotify_MainWindow):
     def __init__(self):
         super(self.__class__, self).__init__()
         self.setupUi(self)
         self.setMinimumSize(WINDOW_WIDTH, WINDOW_HEIGHT)
         self.setup_window_location()
+        self.create_address_cache()
+
+        # if auto_complete is True use custom widgets
+        # otherwise use default widgets from writeandnotify_ui
+        if auto_complete:
+            self.email_password_gridLayout.removeWidget(self.email_lineEdit)
+            self.email_lineEdit.deleteLater()
+            self.email_lineEdit = None
+
+            self.copy_and_subject_gridLayout.removeWidget(self.copy_to_lineEdit)
+            self.copy_to_lineEdit.deleteLater()
+            self.copy_to_lineEdit = None
+
+            self.email_lineEdit = AutoCompleteEdit(self.read_csv())
+            self.copy_to_lineEdit = AutoCompleteEdit(self.read_csv())
+            self.email_password_gridLayout.addWidget(self.email_lineEdit, 0, 0, 1, 1)
+            self.copy_and_subject_gridLayout.addWidget(self.copy_to_lineEdit, 0, 0)
+
+            self.email_lineEdit.setFocus()
+            self.email_lineEdit.isActiveWindow()
+            self.email_lineEdit.raise_()
+
+            self.execute_pushButton.clicked.connect(self.write_csv)
+            self.execute_pushButton.clicked.connect(self.update_completer)
+
+        self.setTabOrder(self.email_lineEdit, self.password_lineEdit.focusProxy())
+        self.setTabOrder(self.password_lineEdit, self.copy_to_lineEdit)
+        self.setTabOrder(self.copy_to_lineEdit.focusProxy(), self.subject_lineEdit)
+        self.setTabOrder(self.subject_lineEdit, self.include_auto_message_checkBox)
+        self.setTabOrder(self.include_auto_message_checkBox, self.message_textEdit)
+        self.setTabOrder(self.message_textEdit, self.cancel_pushButton)
+        self.setTabOrder(self.cancel_pushButton, self.execute_pushButton)
+
         self.setup_ui_text()
 
         self.cancel_pushButton.clicked.connect(self.quit)
         self.execute_pushButton.clicked.connect(self.render_selected)
 
+    def update_completer(self):
+        """
+            Update widgets after user input. Required for auto completion.
+            TODO
+            This is not the best solution but working, rewrite in the future.
+        """
+        self.your_email = str(self.email_lineEdit.text())
+        self.copy_to = str(self.copy_to_lineEdit.text())
+
+        self.email_password_gridLayout.removeWidget(self.email_lineEdit)
+        self.email_lineEdit.deleteLater()
+        self.email_lineEdit = None
+
+        self.copy_and_subject_gridLayout.removeWidget(self.copy_to_lineEdit)
+        self.copy_to_lineEdit.deleteLater()
+        self.copy_to_lineEdit = None
+
+        self.email_lineEdit = AutoCompleteEdit(self.read_csv())
+        self.copy_to_lineEdit = AutoCompleteEdit(self.read_csv())
+        self.email_password_gridLayout.addWidget(self.email_lineEdit, 0, 0, 1, 1)
+        self.copy_and_subject_gridLayout.addWidget(self.copy_to_lineEdit, 0, 0)
+
+        self.email_lineEdit.setText(self.your_email)
+        self.copy_to_lineEdit.setText(self.copy_to)
+
+        self.setTabOrder(self.email_lineEdit, self.password_lineEdit.focusProxy())
+        self.setTabOrder(self.password_lineEdit, self.copy_to_lineEdit)
+        self.setTabOrder(self.copy_to_lineEdit.focusProxy(), self.subject_lineEdit)
+        self.setTabOrder(self.subject_lineEdit, self.include_auto_message_checkBox)
+        self.setTabOrder(self.include_auto_message_checkBox, self.message_textEdit)
+        self.setTabOrder(self.message_textEdit, self.cancel_pushButton)
+        self.setTabOrder(self.cancel_pushButton, self.execute_pushButton)
+
+        self.setup_ui_text()
+
     def quit(self):
+        """
+            Close the panel.
+        """
         self.close()
 
+    def return_not_matches(self, a, b):
+        a = set(a)
+        b = set(b)
+        return [list(b - a), list(a - b)]
+
+    def return_matches(self, L1, L2):
+        t = list(set(L1) & set(L2))
+        return t
+
+    def read_csv(self):
+        """
+            Read csv file.
+        """
+        dir = os.path.dirname(__file__)
+        csv_filename = os.path.join(dir, 'address_cache.csv')
+        ifile = open(csv_filename, "rb")
+        reader = csv.reader(ifile)
+        for row in reader:
+            pass
+        return row
+
+    def write_csv(self):
+        """
+            Write csv file.
+            TODO
+            Rewrite in the future.
+        """
+        e_mail = [self.email_lineEdit.text()]
+        copy_to = [''.join(self.copy_to_lineEdit.text().split())]
+        copy_to = copy_to[0].split(',')
+        copy_to = filter(None, copy_to)
+        copy_to = copy_to + e_mail
+
+        dir = os.path.dirname(__file__)
+        csv_filename = os.path.join(dir, 'address_cache.csv')
+
+        if os.stat(csv_filename).st_size == 0:
+            # if address_cache size is 0 add initial content
+            L1 = copy_to
+            ifile = open(csv_filename, "wb")
+
+            spamwriter = csv.writer(ifile, sys.stdout, delimiter=",", quoting=csv.QUOTE_MINIMAL)
+            spamwriter.writerow(L1)
+            ifile.close()
+        elif copy_to == '':
+            # if copy_to is empty just open the file and close it
+            ifile = open(csv_filename, "rb")
+            ifile.close()
+        elif copy_to != self.read_csv():
+            # add new address to address_cache
+            L2 = copy_to
+            a = self.read_csv()
+            t = self.return_not_matches(a, L2)
+            g = [j for i in t for j in i]
+            g = filter(None, g)
+            c = self.return_matches(self.read_csv(), L2)
+            ifile = open(csv_filename, "wb")
+
+            spamwriter = csv.writer(ifile, sys.stdout, delimiter=",", quoting=csv.QUOTE_NONE)
+            spamwriter.writerow(c + g)
+            ifile.close()
+        else:
+            # in all other casese just open the file and close it
+            ifile = open(csv_filename, "rb")
+            ifile.close()
+
     def setup_window_location(self):
-        # setup window properties
+        """
+            Setup window properties.
+        """
         screen = QtWidgets.QDesktopWidget().screenGeometry()
-        widget = self.geometry()
+        # widget = self.geometry()
         x = screen.width()/2-(WINDOW_WIDTH/2)
         y = screen.height()/2-(WINDOW_HEIGHT/2)-screen.height()/12
         self.move(x, y)
@@ -188,7 +376,6 @@ class WriteandNotify(QtWidgets.QMainWindow, writeandnotify_ui.Ui_writeandnotify_
         self.version_label.setText(version_label_text)
 
     def execute_render(self):
-
         if self.execute_pushButton.clicked:
             self.quit()
 
@@ -203,7 +390,6 @@ class WriteandNotify(QtWidgets.QMainWindow, writeandnotify_ui.Ui_writeandnotify_
         t = ()  # only used in executeMultiple()
 
         # render!
-        # c = len(self.nodes)
         self.write_list = []
         for i, node in enumerate(self.nodes):
             self.first_frame = int(node['first'].value())
@@ -229,7 +415,7 @@ class WriteandNotify(QtWidgets.QMainWindow, writeandnotify_ui.Ui_writeandnotify_
         self.nodes = nuke.selectedNodes('Write')
 
         if self.nodes == []:
-            nuke.message(no_selected_write_message)
+            self.info_label.setText(no_selected_write_message)
         elif self.selected_server not in [j for i in SERVER_INFO for j in i]:
             self.info_label.setText(info_label_text)
             self.execute_render()
@@ -243,11 +429,19 @@ class WriteandNotify(QtWidgets.QMainWindow, writeandnotify_ui.Ui_writeandnotify_
             self.prepare_and_send_message(self.your_email, self.your_password, self.copy_to)
 
     def cleanup_write_list_message(self, write_list):
+        """
+            Reformat the write_list, look better.
+        """
         self.write_list = str(write_list)
         self.write_list = self.write_list.replace("'", "")[1:-1]
         return self.write_list
 
     def prepare_and_send_message(self, your_email, your_password, copy_to):
+        """
+            Send message with the write_list.
+            TODO
+            Rewrite in the future.
+        """
         if self.include_auto_message_checkBox.isChecked():
             self.your_message_body = self.message_textEdit.toPlainText() + "<br><br>" + self.cleanup_write_list_message(self.write_list)
         else:
@@ -266,6 +460,22 @@ class WriteandNotify(QtWidgets.QMainWindow, writeandnotify_ui.Ui_writeandnotify_
 
         return self.message.ret
 
+    def create_address_cache(self):
+        """
+            Create address_cache file.
+        """
+        dir = os.path.dirname(__file__)
+        csv_filename = os.path.join(dir, 'address_cache.csv')
+
+        if not os.path.exists(csv_filename):
+            with open(csv_filename, 'w'): pass
+
+        if os.stat(csv_filename).st_size == 0:
+            ifile = open(csv_filename, "wb")
+            spamwriter = csv.writer(ifile, sys.stdout, delimiter=",", quoting=csv.QUOTE_MINIMAL)
+            spamwriter.writerow('')
+            ifile.close()
+
 
 # if __name__ == "__main__":
 #     aa = WriteandNotify()
@@ -273,4 +483,4 @@ class WriteandNotify(QtWidgets.QMainWindow, writeandnotify_ui.Ui_writeandnotify_
 
 
 def main(a):
-   pass
+    pass

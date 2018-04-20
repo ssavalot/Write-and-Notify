@@ -6,7 +6,17 @@ levente.shadow@gmail.com
 
 CHANGELOG
 
-v1.1.0
+v1.2
+- Auto completion feature have benn added.
+  This change affects the 'e-mail' and 'send a copy' fields.
+  The addresses are automatically added to the completion list and
+  stored in the .nuke/address_cache.csv file.
+
+  You can edit manually the address_cache.csv, if you want to change something.
+  Follow this format:
+      example1@any.com,example2@any.com,example3@any.com...
+
+v1.1
 - Send a copy field have been added. You can send a copy of the message to multiple recipients.
 - Code cleanup and better error handling.
 
