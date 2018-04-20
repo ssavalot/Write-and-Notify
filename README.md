@@ -1,7 +1,7 @@
-<b>Write and Notify</b><br>
-v1.2<br>
-Levente Vass<br>
-April 2018<br>
+Write and Notify
+v1.2
+Levente Vass
+April 2018
 
 DESCRIPTION
 
