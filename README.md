@@ -2,7 +2,6 @@
 v1.2<br>
 Levente Vass<br>
 April 2018<br>
-levente.shadow@gmail.com<br>
 
 DESCRIPTION
 
