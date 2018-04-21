@@ -12,7 +12,7 @@ When the render is done, the tool sends you a message to your email address. The
 CHANGELOG
 
 v1.3
-- code cleanup
+- Code cleanup and better error handling.
 
 v1.2
 - Auto completion feature have benn added.
