@@ -68,6 +68,8 @@ render_done_but_not_sent_warning_text = "Render is done but the notification was
 start = "@"
 end = "."
 
+address_cache = "address_cache.csv"
+
 auto_complete = True
 
 # TODO
@@ -192,11 +194,11 @@ class WriteandNotify(QtWidgets.QMainWindow, writeandnotify_ui.Ui_writeandnotify_
         self.setupUi(self)
         self.setMinimumSize(WINDOW_WIDTH, WINDOW_HEIGHT)
         self.setup_window_location()
-        self.create_address_cache()
 
         # if auto_complete is True use custom widgets
-        # otherwise use default widgets from writeandnotify_ui
         if auto_complete:
+            self.create_address_cache()
+
             self.email_password_gridLayout.removeWidget(self.email_lineEdit)
             self.email_lineEdit.deleteLater()
             self.email_lineEdit = None
@@ -265,88 +267,6 @@ class WriteandNotify(QtWidgets.QMainWindow, writeandnotify_ui.Ui_writeandnotify_
 
         self.setup_ui_text()
 
-    def quit(self):
-        """
-            Close the panel.
-        """
-        self.close()
-
-    def return_not_matches(self, a, b):
-        a = set(a)
-        b = set(b)
-        return [list(b - a), list(a - b)]
-
-    def return_matches(self, L1, L2):
-        t = list(set(L1) & set(L2))
-        return t
-
-    def read_csv(self):
-        """
-            Read csv file.
-        """
-        dir = os.path.dirname(__file__)
-        csv_filename = os.path.join(dir, 'address_cache.csv')
-        ifile = open(csv_filename, "rb")
-        reader = csv.reader(ifile)
-        for row in reader:
-            pass
-        return row
-
-    def write_csv(self):
-        """
-            Write csv file.
-            TODO
-            Rewrite in the future.
-        """
-        e_mail = [self.email_lineEdit.text()]
-        copy_to = [''.join(self.copy_to_lineEdit.text().split())]
-        copy_to = copy_to[0].split(',')
-        copy_to = filter(None, copy_to)
-        copy_to = copy_to + e_mail
-
-        dir = os.path.dirname(__file__)
-        csv_filename = os.path.join(dir, 'address_cache.csv')
-
-        if os.stat(csv_filename).st_size == 0:
-            # if address_cache size is 0 add initial content
-            L1 = copy_to
-            ifile = open(csv_filename, "wb")
-
-            spamwriter = csv.writer(ifile, sys.stdout, delimiter=",", quoting=csv.QUOTE_MINIMAL)
-            spamwriter.writerow(L1)
-            ifile.close()
-        elif copy_to == '':
-            # if copy_to is empty just open the file and close it
-            ifile = open(csv_filename, "rb")
-            ifile.close()
-        elif copy_to != self.read_csv():
-            # add new address to address_cache
-            L2 = copy_to
-            a = self.read_csv()
-            t = self.return_not_matches(a, L2)
-            g = [j for i in t for j in i]
-            g = filter(None, g)
-            c = self.return_matches(self.read_csv(), L2)
-            ifile = open(csv_filename, "wb")
-
-            spamwriter = csv.writer(ifile, sys.stdout, delimiter=",", quoting=csv.QUOTE_NONE)
-            spamwriter.writerow(c + g)
-            ifile.close()
-        else:
-            # in all other casese just open the file and close it
-            ifile = open(csv_filename, "rb")
-            ifile.close()
-
-    def setup_window_location(self):
-        """
-            Setup window properties.
-        """
-        screen = QtWidgets.QDesktopWidget().screenGeometry()
-        # widget = self.geometry()
-        x = screen.width()/2-(WINDOW_WIDTH/2)
-        y = screen.height()/2-(WINDOW_HEIGHT/2)-screen.height()/12
-        self.move(x, y)
-
     def setup_ui_text(self):
         # setup widget texts
         self.cancel_pushButton.setText(cancel_pushButton_text)
@@ -374,6 +294,102 @@ class WriteandNotify(QtWidgets.QMainWindow, writeandnotify_ui.Ui_writeandnotify_
         self.include_auto_message_checkBox.setToolTip(include_auto_message_checkBox_toolTip)
 
         self.version_label.setText(version_label_text)
+
+    def quit(self):
+        """
+            Close the panel.
+        """
+        self.close()
+
+    def return_not_matches(self, L1, L2):
+        L1 = set(L1)
+        L2 = set(L2)
+        return [list(L2 - L1), list(L1 - L2)]
+
+    def return_matches(self, L1, L2):
+        return list(set(L1) & set(L2))
+
+    def read_csv(self):
+        """
+            Read csv file.
+        """
+        dir = os.path.dirname(__file__)
+        csv_filename = os.path.join(dir, address_cache)
+        ifile = open(csv_filename, "rb")
+        reader = csv.reader(ifile)
+
+        for row in reader:
+            pass
+        return row
+
+    def write_csv(self):
+        """
+            Write csv file.
+            TODO
+            Rewrite in the future.
+        """
+        # remove whitespaces
+        print(self.email_lineEdit.text())
+        self.e_mail = ''.join(self.email_lineEdit.text().split())
+        # split to new list
+        self.e_mail = self.e_mail.split(',')
+        # filter empty items
+        self.e_mail = filter(None, self.e_mail)
+
+        # remove whitespaces
+        self.copy_to = ''.join(self.copy_to_lineEdit.text().split())
+        # split to new list
+        self.copy_to = self.copy_to.split(',')
+        # filter empty items
+        self.copy_to = filter(None, self.copy_to)
+
+        # build the extended contact list
+        self.extended_address_list = self.copy_to + self.e_mail
+
+        dir = os.path.dirname(__file__)
+        csv_filename = os.path.join(dir, address_cache)
+
+        if os.stat(csv_filename).st_size == 0:
+            # if address_cache size is 0 add initial content
+            ifile = open(csv_filename, "wb")
+
+            spamwriter = csv.writer(ifile, sys.stdout, delimiter=",", quoting=csv.QUOTE_MINIMAL)
+            spamwriter.writerow(self.copy_to)
+
+            ifile.close()
+        elif self.extended_address_list == '':
+            pass
+        elif len(self.e_mail) > 1:
+            pass
+        elif self.extended_address_list != self.read_csv():
+            # add new address to address_cache
+            self.current_addresses = self.read_csv()
+
+            self.not_matched_addresses = self.return_not_matches(self.current_addresses, self.extended_address_list)
+            self.not_matched_addresses = [j for i in self.not_matched_addresses for j in i]
+            self.not_matched_addresses = filter(None, self.not_matched_addresses)
+
+            self.matched_addresses_addresses = self.return_matches(self.read_csv(), self.copy_to)
+
+            ifile = open(csv_filename, "wb")
+            spamwriter = csv.writer(ifile, sys.stdout, delimiter=",", quoting=csv.QUOTE_NONE)
+            spamwriter.writerow(self.matched_addresses_addresses + self.not_matched_addresses)
+
+            ifile.close()
+        else:
+            # in all other casese just open the file and close it
+            ifile = open(csv_filename, "rb")
+
+            ifile.close()
+
+    def setup_window_location(self):
+        """
+            Setup window properties.
+        """
+        screen = QtWidgets.QDesktopWidget().screenGeometry()
+        x = screen.width()/2-(WINDOW_WIDTH/2)
+        y = screen.height()/2-(WINDOW_HEIGHT/2)-screen.height()/12
+        self.move(x, y)
 
     def execute_render(self):
         if self.execute_pushButton.clicked:
@@ -465,7 +481,7 @@ class WriteandNotify(QtWidgets.QMainWindow, writeandnotify_ui.Ui_writeandnotify_
             Create address_cache file.
         """
         dir = os.path.dirname(__file__)
-        csv_filename = os.path.join(dir, 'address_cache.csv')
+        csv_filename = os.path.join(dir, address_cache)
 
         if not os.path.exists(csv_filename):
             with open(csv_filename, 'w'): pass
