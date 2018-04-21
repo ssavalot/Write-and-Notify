@@ -46,7 +46,7 @@ cancel_pushButton_text = "Cancel"
 execute_pushButton_text = "Run"
 info_label_text = ""
 
-version_label_text = "v1.2"
+version_label_text = "v1.3"
 
 # tooltips
 email_lineEdit_toolTip = "Type your e-mail address, e.g. myaddress@gmail.com or myaddress@yahoo.com."

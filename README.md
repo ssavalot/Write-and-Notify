@@ -1,6 +1,5 @@
 Write and Notify
 
-v1.2
 
 Levente Vass
 
@@ -11,6 +10,9 @@ DESCRIPTION
 When the render is done, the tool sends you a message to your email address. The tool currently works with g-mail and yahoo accounts.
 
 CHANGELOG
+
+v1.3
+- code cleanup
 
 v1.2
 - Auto completion feature have benn added.
