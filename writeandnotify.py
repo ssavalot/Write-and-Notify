@@ -65,7 +65,7 @@ execute_pushButton_toolTip = "Run"
 # warning messages
 no_selected_write_message = "Write is not selected!"
 info_label_warning_text = "Wrong e-mail or password!"
-render_done_but_not_sent_warning_text = "Render is done but the notification was not sent.\nMissing or wrong e-mail or password."
+render_done_but_not_sent_warning_text = "The message has not sent.\nMissing or wrong e-mail or password."
 message_sent = "Message sent."
 
 # for searching
