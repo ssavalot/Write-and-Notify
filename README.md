@@ -68,7 +68,7 @@ USAGE
         SERVER_INFO = [["yahoo", "smtp.mail.yahoo.com", 587], ["gmail", "smtp.gmail.com", 587]]
 
     little explanation:
-    "yahoo" - e-mail provider sort name
+    "yahoo" - e-mail provider short name
     "smtp.mail.yahoo.com" - (only work with) smtp server
     587 - port
 
