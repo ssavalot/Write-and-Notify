@@ -15,7 +15,7 @@ v1.3
 - Code cleanup and better error handling.
 
 v1.2
-- Auto completion feature have benn added.
+- Autocompletion feature have benn added.
   This change affects the 'e-mail' and 'send a copy' fields.
   The addresses are automatically added to the completion list and
   stored in the .nuke/address_cache.csv file.
@@ -23,6 +23,11 @@ v1.2
   You can edit manually the address_cache.csv, if you want to change something.
   Follow this format:
       example1@any.com,example2@any.com,example3@any.com...
+
+  If you don't want autocompletion feature, modify the following line(73) in the writeandnotify.py:
+    auto_complete = True
+  autocompletion off:
+    auto_complete = False
 
 v1.1
 - Send a copy field have been added. You can send a copy of the message to multiple recipients.
@@ -33,7 +38,7 @@ INSTALL
     1.)
     Copy these files to the .nuke directory.
 
-    writeandnotify.py 
+    writeandnotify.py
     writeandnotify_ui.py
 
     2.)
@@ -51,7 +56,16 @@ USAGE
     3. Select one or multiple wite nodes.
     4. Press Run button. If you leave the fields blank, you can execute selected Write nodes.
 
-    The tool currently only works with g-mail and yahoo accounts.
+    The tool currently works with g-mail and yahoo accounts.
+    If you want to add other e-mail provider, change the following line(33):
+
+        SERVER_INFO = [["yahoo", "smtp.mail.yahoo.com", 587], ["gmail", "smtp.gmail.com", 587]]
+
+    little explanation
+    e-mail provider sort name: "yahoo"
+    (only work with) smtp server: "smtp.mail.yahoo.com"
+    port: 587
+
     You can execute multiple write nodes, the rendering is sorted by render order.
 
 SECURITY
