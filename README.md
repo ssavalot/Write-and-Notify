@@ -14,7 +14,8 @@ CHANGELOG
 v1.4
 - 'just send the message' feature have been added,
   if it's checked, the tool only sends the message without Write execution
-- bugfixes in autocompletion
+- bugfixes in autocompletion and messaging
+- minor layout changes
 
 v1.3
 - Code cleanup and better error handling.

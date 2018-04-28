@@ -76,8 +76,6 @@ address_cache = "address_cache.csv"
 
 auto_complete = True
 
-pocs = 0
-
 # TODO
 # - make code more consistent
 
@@ -214,7 +212,11 @@ class WriteandNotify(QtWidgets.QMainWindow, writeandnotify_ui.Ui_writeandnotify_
             self.copy_to_lineEdit = None
 
             self.email_lineEdit = AutoCompleteEdit(self.read_csv())
+            self.email_lineEdit.setFrame(False)
+            self.email_lineEdit.setMinimumSize(0, 26)
             self.copy_to_lineEdit = AutoCompleteEdit(self.read_csv())
+            self.copy_to_lineEdit.setFrame(False)
+            self.copy_to_lineEdit.setMinimumSize(0, 26)
             self.email_password_gridLayout.addWidget(self.email_lineEdit, 0, 0, 1, 1)
             self.copy_and_subject_gridLayout.addWidget(self.copy_to_lineEdit, 0, 0)
 
@@ -271,7 +273,11 @@ class WriteandNotify(QtWidgets.QMainWindow, writeandnotify_ui.Ui_writeandnotify_
         self.copy_to_lineEdit = None
 
         self.email_lineEdit = AutoCompleteEdit(self.read_csv())
+        self.email_lineEdit.setFrame(False)
+        self.email_lineEdit.setMinimumSize(0, 26)
         self.copy_to_lineEdit = AutoCompleteEdit(self.read_csv())
+        self.copy_to_lineEdit.setFrame(False)
+        self.copy_to_lineEdit.setMinimumSize(0, 26)
         self.email_password_gridLayout.addWidget(self.email_lineEdit, 0, 0, 1, 1)
         self.copy_and_subject_gridLayout.addWidget(self.copy_to_lineEdit, 0, 0)
 
@@ -450,7 +456,7 @@ class WriteandNotify(QtWidgets.QMainWindow, writeandnotify_ui.Ui_writeandnotify_
 
         self.nodes = nuke.selectedNodes('Write')
 
-        if self.nodes == []:
+        if self.nodes == [] and self.include_auto_message_checkBox.isChecked():
             self.info_label.setText(no_selected_write_message)
         elif self.selected_server not in [j for i in SERVER_INFO for j in i]:
             self.execute_render()

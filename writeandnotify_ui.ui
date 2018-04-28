@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>268</width>
-    <height>333</height>
+    <height>343</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,8 +19,17 @@
      <layout class="QGridLayout" name="email_password_gridLayout">
       <item row="0" column="0">
        <widget class="QLineEdit" name="email_lineEdit">
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>26</height>
+         </size>
+        </property>
         <property name="toolTip">
          <string>email_toolTip</string>
+        </property>
+        <property name="frame">
+         <bool>false</bool>
         </property>
         <property name="placeholderText">
          <string>email_placeholderText</string>
@@ -29,11 +38,20 @@
       </item>
       <item row="0" column="1">
        <widget class="QLineEdit" name="password_lineEdit">
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>26</height>
+         </size>
+        </property>
         <property name="toolTip">
          <string>password_toolTip</string>
         </property>
         <property name="inputMethodHints">
          <set>Qt::ImhHiddenText|Qt::ImhNoAutoUppercase|Qt::ImhNoPredictiveText|Qt::ImhSensitiveData</set>
+        </property>
+        <property name="frame">
+         <bool>false</bool>
         </property>
         <property name="echoMode">
          <enum>QLineEdit::Password</enum>
@@ -50,6 +68,9 @@
       <property name="styleSheet">
        <string notr="true">color: rgb(99, 99, 99);</string>
       </property>
+      <property name="frameShadow">
+       <enum>QFrame::Plain</enum>
+      </property>
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
       </property>
@@ -59,8 +80,17 @@
      <layout class="QGridLayout" name="copy_and_subject_gridLayout">
       <item row="1" column="0">
        <widget class="QLineEdit" name="subject_lineEdit">
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>26</height>
+         </size>
+        </property>
         <property name="toolTip">
          <string>subject_toolTip</string>
+        </property>
+        <property name="frame">
+         <bool>false</bool>
         </property>
         <property name="placeholderText">
          <string>subject_placeholderText</string>
@@ -69,10 +99,19 @@
       </item>
       <item row="0" column="0">
        <widget class="QLineEdit" name="copy_to_lineEdit">
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>26</height>
+         </size>
+        </property>
         <property name="toolTip">
          <string>copy_to_toolTip</string>
         </property>
         <property name="autoFillBackground">
+         <bool>false</bool>
+        </property>
+        <property name="frame">
          <bool>false</bool>
         </property>
         <property name="placeholderText">
@@ -107,6 +146,9 @@
       <property name="toolTip">
        <string>message_toolTip</string>
       </property>
+      <property name="frameShape">
+       <enum>QFrame::NoFrame</enum>
+      </property>
       <property name="placeholderText">
        <string>message_placholderText</string>
       </property>
@@ -122,6 +164,9 @@
         <property name="text">
          <string>cancel_pushButton</string>
         </property>
+        <property name="flat">
+         <bool>false</bool>
+        </property>
        </widget>
       </item>
       <item>
@@ -131,6 +176,9 @@
         </property>
         <property name="text">
          <string>execute_pushButton</string>
+        </property>
+        <property name="flat">
+         <bool>false</bool>
         </property>
        </widget>
       </item>
