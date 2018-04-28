@@ -25,6 +25,7 @@ v1.2
       example1@any.com,example2@any.com,example3@any.com...
 
   If you don't want autocompletion feature, modify the following line(73) in the writeandnotify.py:
+
     auto_complete = True
   autocompletion off:
     auto_complete = False
@@ -61,10 +62,10 @@ USAGE
 
         SERVER_INFO = [["yahoo", "smtp.mail.yahoo.com", 587], ["gmail", "smtp.gmail.com", 587]]
 
-    little explanation
-    e-mail provider sort name: "yahoo"
-    (only work with) smtp server: "smtp.mail.yahoo.com"
-    port: 587
+    little explanation:
+    "yahoo" - e-mail provider sort name
+    "smtp.mail.yahoo.com" - (only work with) smtp server
+    587 - port
 
     You can execute multiple write nodes, the rendering is sorted by render order.
 
