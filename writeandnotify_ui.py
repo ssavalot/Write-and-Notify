@@ -11,7 +11,7 @@ from PySide2 import QtCore, QtGui, QtWidgets
 class Ui_writeandnotify_MainWindow(object):
     def setupUi(self, writeandnotify_MainWindow):
         writeandnotify_MainWindow.setObjectName("writeandnotify_MainWindow")
-        writeandnotify_MainWindow.resize(293, 317)
+        writeandnotify_MainWindow.resize(268, 333)
         self.writeandnotify_centralwidget = QtWidgets.QWidget(writeandnotify_MainWindow)
         self.writeandnotify_centralwidget.setObjectName("writeandnotify_centralwidget")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.writeandnotify_centralwidget)
@@ -43,6 +43,9 @@ class Ui_writeandnotify_MainWindow(object):
         self.copy_to_lineEdit.setObjectName("copy_to_lineEdit")
         self.copy_and_subject_gridLayout.addWidget(self.copy_to_lineEdit, 0, 0, 1, 1)
         self.verticalLayout.addLayout(self.copy_and_subject_gridLayout)
+        self.just_send_the_message_checkBox = QtWidgets.QCheckBox(self.writeandnotify_centralwidget)
+        self.just_send_the_message_checkBox.setObjectName("just_send_the_message_checkBox")
+        self.verticalLayout.addWidget(self.just_send_the_message_checkBox)
         self.include_auto_message_checkBox = QtWidgets.QCheckBox(self.writeandnotify_centralwidget)
         self.include_auto_message_checkBox.setObjectName("include_auto_message_checkBox")
         self.verticalLayout.addWidget(self.include_auto_message_checkBox)
@@ -91,6 +94,8 @@ class Ui_writeandnotify_MainWindow(object):
         self.subject_lineEdit.setPlaceholderText(_translate("writeandnotify_MainWindow", "subject_placeholderText"))
         self.copy_to_lineEdit.setToolTip(_translate("writeandnotify_MainWindow", "copy_to_toolTip"))
         self.copy_to_lineEdit.setPlaceholderText(_translate("writeandnotify_MainWindow", "copy_to_placeholderText"))
+        self.just_send_the_message_checkBox.setStatusTip(_translate("writeandnotify_MainWindow", "just_send_the_message_checkBox_toolTip"))
+        self.just_send_the_message_checkBox.setText(_translate("writeandnotify_MainWindow", "just_send_the_message_checkBox_text"))
         self.include_auto_message_checkBox.setToolTip(_translate("writeandnotify_MainWindow", "include_auto_message_toolTip"))
         self.include_auto_message_checkBox.setText(_translate("writeandnotify_MainWindow", "include_auto_message_checkBox_text"))
         self.message_textEdit.setToolTip(_translate("writeandnotify_MainWindow", "message_toolTip"))

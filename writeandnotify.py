@@ -21,6 +21,7 @@ from PySide2 import QtWidgets, QtGui, QtCore
 import os
 import sys
 import csv
+import functools
 
 import nuke
 import smtplib
@@ -41,12 +42,13 @@ message_lineEdit_placeholderText = "message"
 
 # widget text
 include_auto_message_checkBox_text = "include Write name"
+just_send_the_message_checkBox_text = "just send the message"
 
 cancel_pushButton_text = "Cancel"
 execute_pushButton_text = "Run"
 info_label_text = ""
 
-version_label_text = "v1.3"
+version_label_text = "v1.4"
 
 # tooltips
 email_lineEdit_toolTip = "Type your e-mail address, e.g. myaddress@gmail.com or myaddress@yahoo.com."
@@ -54,6 +56,7 @@ pasword_lineEdit_toolTip = "password"
 copy_to_lineEdit_toolTip = "Send a copy to recipients."
 subject_lineEdit_toolTip = "subject"
 include_auto_message_checkBox_toolTip = "The Write node name attached to the end of the message."
+just_send_the_message_checkBox_toolTip = "Just send the message, nothing more."
 message_lineEdit_toolTip = "message"
 
 cancel_pushButton_toolTip = "Cancel"
@@ -63,6 +66,7 @@ execute_pushButton_toolTip = "Run"
 no_selected_write_message = "Write is not selected!"
 info_label_warning_text = "Wrong e-mail or password!"
 render_done_but_not_sent_warning_text = "Render is done but the notification was not sent.\nMissing or wrong e-mail or password."
+message_sent = "Message sent."
 
 # for searching
 start = "@"
@@ -71,6 +75,8 @@ end = "."
 address_cache = "address_cache.csv"
 
 auto_complete = True
+
+pocs = 0
 
 # TODO
 # - make code more consistent
@@ -232,6 +238,21 @@ class WriteandNotify(QtWidgets.QMainWindow, writeandnotify_ui.Ui_writeandnotify_
         self.cancel_pushButton.clicked.connect(self.quit)
         self.execute_pushButton.clicked.connect(self.render_selected)
 
+        # disable write list widget
+#         self.just_send_the_message_checkBox.mousePressEvent = functools.partial(
+#                         self.check_button,
+#                         source_object=self.just_send_the_message_checkBox)
+
+#     def check_button(self, event, source_object=None):
+#         if self.just_send_the_message_checkBox.isChecked():
+#             print('enabled')
+#             self.just_send_the_message_checkBox.setChecked(False)
+#             self.include_auto_message_checkBox.setEnabled(True)
+#         else:
+#             print('not enabled')
+#             self.just_send_the_message_checkBox.setChecked(True)
+#             self.include_auto_message_checkBox.setEnabled(False)
+
     def update_completer(self):
         """
             Update widgets after user input. Required for auto completion.
@@ -272,6 +293,7 @@ class WriteandNotify(QtWidgets.QMainWindow, writeandnotify_ui.Ui_writeandnotify_
         self.cancel_pushButton.setText(cancel_pushButton_text)
         self.execute_pushButton.setText(execute_pushButton_text)
         self.include_auto_message_checkBox.setText(include_auto_message_checkBox_text)
+        self.just_send_the_message_checkBox.setText(just_send_the_message_checkBox_text)
         self.info_label.setText(info_label_text)
 
         # setup placeholder texts
@@ -292,6 +314,7 @@ class WriteandNotify(QtWidgets.QMainWindow, writeandnotify_ui.Ui_writeandnotify_
         self.message_textEdit.setToolTip(message_lineEdit_toolTip)
 
         self.include_auto_message_checkBox.setToolTip(include_auto_message_checkBox_toolTip)
+        self.just_send_the_message_checkBox.setToolTip(just_send_the_message_checkBox_toolTip)
 
         self.version_label.setText(version_label_text)
 
@@ -302,9 +325,7 @@ class WriteandNotify(QtWidgets.QMainWindow, writeandnotify_ui.Ui_writeandnotify_
         self.close()
 
     def return_not_matches(self, L1, L2):
-        L1 = set(L1)
-        L2 = set(L2)
-        return [list(L2 - L1), list(L1 - L2)]
+        return [[x for x in L1 if x not in L2], [x for x in L2 if x not in L1]]
 
     def return_matches(self, L1, L2):
         return list(set(L1) & set(L2))
@@ -329,7 +350,6 @@ class WriteandNotify(QtWidgets.QMainWindow, writeandnotify_ui.Ui_writeandnotify_
             Rewrite in the future.
         """
         # remove whitespaces
-        print(self.email_lineEdit.text())
         self.e_mail = ''.join(self.email_lineEdit.text().split())
         # split to new list
         self.e_mail = self.e_mail.split(',')
@@ -365,15 +385,15 @@ class WriteandNotify(QtWidgets.QMainWindow, writeandnotify_ui.Ui_writeandnotify_
             # add new address to address_cache
             self.current_addresses = self.read_csv()
 
-            self.not_matched_addresses = self.return_not_matches(self.current_addresses, self.extended_address_list)
+            self.not_matched_addresses = self.return_not_matches(self.extended_address_list, self.current_addresses)
             self.not_matched_addresses = [j for i in self.not_matched_addresses for j in i]
             self.not_matched_addresses = filter(None, self.not_matched_addresses)
 
-            self.matched_addresses_addresses = self.return_matches(self.read_csv(), self.copy_to)
+            self.matched_addresses = self.return_matches(self.read_csv(), self.extended_address_list)
 
             ifile = open(csv_filename, "wb")
             spamwriter = csv.writer(ifile, sys.stdout, delimiter=",", quoting=csv.QUOTE_NONE)
-            spamwriter.writerow(self.matched_addresses_addresses + self.not_matched_addresses)
+            spamwriter.writerow(self.matched_addresses + self.not_matched_addresses)
 
             ifile.close()
         else:
@@ -433,16 +453,22 @@ class WriteandNotify(QtWidgets.QMainWindow, writeandnotify_ui.Ui_writeandnotify_
         if self.nodes == []:
             self.info_label.setText(no_selected_write_message)
         elif self.selected_server not in [j for i in SERVER_INFO for j in i]:
-            self.info_label.setText(info_label_text)
             self.execute_render()
             nuke.message(render_done_but_not_sent_warning_text)
         elif self.user_account_check(self.your_email, self.your_password, self.copy_to) == False:
             self.info_label.setText(info_label_warning_text)
+        elif self.just_send_the_message_checkBox.isChecked():
+            self.info_label.setText(info_label_text)
+            self.prepare_and_send_message_only(self.your_email, self.your_password, self.copy_to)
+            self.info_label.setText(info_label_text)
+            self.quit()
+            nuke.message(message_sent)
         else:
             self.info_label.setText(info_label_text)
             self.execute_render()
             # send mail
-            self.prepare_and_send_message(self.your_email, self.your_password, self.copy_to)
+            self.prepare_and_send_message_after_render(self.your_email, self.your_password, self.copy_to)
+            self.info_label.setText(info_label_text)
 
     def cleanup_write_list_message(self, write_list):
         """
@@ -452,7 +478,7 @@ class WriteandNotify(QtWidgets.QMainWindow, writeandnotify_ui.Ui_writeandnotify_
         self.write_list = self.write_list.replace("'", "")[1:-1]
         return self.write_list
 
-    def prepare_and_send_message(self, your_email, your_password, copy_to):
+    def prepare_and_send_message_after_render(self, your_email, your_password, copy_to):
         """
             Send message with the write_list.
             TODO
@@ -468,6 +494,29 @@ class WriteandNotify(QtWidgets.QMainWindow, writeandnotify_ui.Ui_writeandnotify_
         else:
             self.message = SendMail(self.your_email, self.your_password, self.copy_to)
             self.message.send_message(self.your_subject, self.your_message_body)
+
+        del self.your_password
+
+    def prepare_and_send_message_only(self, your_email, your_password, copy_to):
+        """
+            Send message with the write_list.
+            TODO
+            Rewrite in the future.
+        """
+        self.nodes = nuke.selectedNodes('Write')
+
+        self.write_list = []
+        for i, node in enumerate(self.nodes):
+            writers = "%s" % (node.name())
+            self.write_list.append(writers)
+
+        if self.include_auto_message_checkBox.isChecked():
+            self.your_message = self.message_textEdit.toPlainText() + "<br><br>" + self.cleanup_write_list_message(self.write_list)
+        else:
+            self.your_message = self.message_textEdit.toPlainText()
+
+        self.message = SendMail(self.your_email, self.your_password, self.copy_to)
+        self.message.send_message(self.your_subject, self.your_message)
 
         del self.your_password
 
