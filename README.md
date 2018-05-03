@@ -21,7 +21,7 @@ v1.3
 - Code cleanup and better error handling.
 
 v1.2
-- Autocompletion feature have benn added.
+- Autocompletion feature have been added.
   This change affects the 'e-mail' and 'send a copy' fields.
   The addresses are automatically added to the completion list and
   stored in the .nuke/address_cache.csv file.
